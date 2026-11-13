@@ -1,6 +1,6 @@
 # AuthLens
 
-**An OAuth 2.0 / JOSE inspection workbench built in three layers and three languages.**
+**An OAuth 2.0 / JOSE inspection workbench built in three layers.**
 
 AuthLens reads a token the way an attacker and a verifier both would: the C++ core measures the
 bytes, `authlas-python` applies the protocol rules, and the TypeScript interface shows you the two
