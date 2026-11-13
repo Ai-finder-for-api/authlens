@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AuthLens — offline showcase</title>
+<style>/* AuthLens — a dark instrument panel: deep slate, cyan accents, monospace data. */
+:root {
+  --bg: #080c12;
+  --bg-2: #0c121a;
+  --panel: rgba(18, 27, 38, 0.86);
+  --panel-solid: #121b26;
+  --line: rgba(148, 163, 184, 0.14);
+  --line-strong: rgba(148, 163, 184, 0.26);
+  --text: #e8eef6;
+  --muted: #8b9cad;
+  --accent: #4cc9f0;
+  --accent-2: #7aa2f7;
+  --ok: #35d07f;
+  --warn: #f5a524;
+  --bad: #f0687a;
+  --critical: #ff4d6d;
+  --radius: 14px;
+  --mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Code", monospace;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 12% -8%, rgba(76, 201, 240, 0.14), transparent 60%),
+    radial-gradient(700px 420px at 92% 4%, rgba(122, 162, 247, 0.12), transparent 65%),
+    linear-gradient(180deg, #090e15 0%, #070b11 100%);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); height: 100vh; }
+
+/* ---------------------------------------------------------------- rail */
+.rail {
+  display: flex; flex-direction: column; gap: 22px;
+  padding: 22px 16px 18px;
+  border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(13, 20, 29, 0.95), rgba(9, 14, 20, 0.9));
+  backdrop-filter: blur(8px);
+}
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 6px; }
+.brand__mark {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: 11px; color: #04121a;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 18px rgba(76, 201, 240, 0.32);
+}
+.brand__mark .icon { width: 21px; height: 21px; stroke-width: 1.7; }
+.brand__text { display: flex; flex-direction: column; line-height: 1.15; }
+.brand__text strong { font-size: 15px; letter-spacing: 0.2px; }
+.brand__text span { font-size: 11px; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav__item {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 10px 11px; border: 1px solid transparent; border-radius: 11px;
+  background: none; color: var(--muted); text-align: left; cursor: pointer;
+  font: inherit; transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.nav__item:hover { background: rgba(148, 163, 184, 0.07); color: var(--text); }
+.nav__item.is-active {
+  background: linear-gradient(100deg, rgba(76, 201, 240, 0.16), rgba(122, 162, 247, 0.06));
+  border-color: rgba(76, 201, 240, 0.32); color: var(--text);
+}
+.nav__item .icon { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; }
+.nav__text { display: flex; flex-direction: column; }
+.nav__label { font-size: 13.5px; font-weight: 600; }
+.nav__hint { font-size: 11px; color: var(--muted); letter-spacing: 0.01em; }
+.rail__foot { margin-top: auto; border-top: 1px solid var(--line); padding-top: 14px; }
+.rail__cap { margin: 0 0 8px; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.stacklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.stacklist b { color: var(--text); font-weight: 600; }
+
+/* -------------------------------------------------------------- main */
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 18px 26px 16px; border-bottom: 1px solid var(--line);
+  background: rgba(9, 14, 20, 0.55); backdrop-filter: blur(6px);
+}
+.topbar__title { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+.topbar__sub { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
+.layer-chips { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+.lchip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px;
+  background: rgba(18, 27, 38, 0.7); font-size: 11.5px; color: var(--muted);
+}
+.lchip code { font-family: var(--mono); font-size: 11px; color: var(--text); }
+.lchip__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px currentColor; }
+.lchip--core .lchip__dot { background: #ff9f68; }
+.lchip--main .lchip__dot { background: var(--accent); }
+.lchip--ui .lchip__dot { background: var(--accent-2); }
+.lchip--uptime { color: var(--muted); font-family: var(--mono); }
+.lchip--bad { color: var(--bad); border-color: rgba(240, 104, 122, 0.4); }
+
+.outlet { overflow-y: auto; padding: 22px 26px 46px; scroll-behavior: smooth; }
+.view { display: grid; gap: 16px; max-width: 1180px; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1080px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } .app { grid-template-columns: 210px minmax(0,1fr); } }
+
+/* -------------------------------------------------------------- cards */
+.card {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
+}
+.card__head { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.card__title { margin: 0; font-size: 13.5px; font-weight: 650; letter-spacing: 0.01em; }
+.card__sub { margin: 3px 0 0; font-size: 11.8px; color: var(--muted); }
+.card__body { padding: 14px 16px 16px; display: grid; gap: 12px; }
+.card--notes .card__body { padding-top: 10px; }
+.stack { display: grid; gap: 16px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.row--end { align-items: end; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.toolbar { display: flex; align-items: center; gap: 9px; }
+.spacer { flex: 1; }
+.muted { color: var(--muted); font-size: 12px; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; display: inline-block; vertical-align: bottom; }
+
+/* ----------------------------------------------------------- controls */
+.input {
+  width: 100%; padding: 9px 11px; color: var(--text); font: inherit; font-size: 12.5px;
+  background: rgba(6, 10, 15, 0.7); border: 1px solid var(--line-strong); border-radius: 9px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.input:focus { outline: none; border-color: rgba(76, 201, 240, 0.65); box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.12); }
+.input--area { resize: vertical; font-family: var(--mono); font-size: 11.8px; line-height: 1.55; min-height: 76px; }
+.input--select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field__label { font-size: 10.6px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); }
+.field__hint { font-size: 11px; color: var(--muted); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: #04121a; cursor: pointer;
+  border: 1px solid transparent; border-radius: 9px;
+  background: linear-gradient(145deg, var(--accent), #58a6f5);
+  box-shadow: 0 6px 16px rgba(76, 201, 240, 0.24);
+  transition: transform 120ms ease, filter 120ms ease;
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn--ghost { background: rgba(148, 163, 184, 0.1); color: var(--text); border-color: var(--line-strong); box-shadow: none; }
+.btn--quiet { background: none; color: var(--muted); border-color: transparent; box-shadow: none; }
+.btn--quiet:hover { color: var(--text); background: rgba(148, 163, 184, 0.08); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 7px 11px; cursor: pointer; text-align: left;
+  background: rgba(148, 163, 184, 0.07); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--text); font: inherit; transition: all 140ms ease;
+}
+.chip:hover { border-color: rgba(76, 201, 240, 0.45); background: rgba(76, 201, 240, 0.1); transform: translateY(-1px); }
+.chip__label { font-size: 12px; font-weight: 600; }
+.chip__hint { font-size: 10.5px; color: var(--muted); font-family: var(--mono); }
+
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  border: 1px solid var(--line-strong); color: var(--muted); background: rgba(148, 163, 184, 0.08);
+}
+.badge--ok { color: #052e1c; background: var(--ok); border-color: transparent; }
+.badge--bad { color: #34060f; background: var(--bad); border-color: transparent; }
+.badge--warn { color: #2b1a00; background: var(--warn); border-color: transparent; }
+.badge--critical { color: #34060f; background: var(--critical); border-color: transparent; }
+.badge--high { color: #2b0c00; background: #ff8a5c; border-color: transparent; }
+.badge--medium { color: #2b1a00; background: var(--warn); border-color: transparent; }
+.badge--low { color: #0b1b2b; background: #8fb8de; border-color: transparent; }
+.badge--info, .badge--idle { color: var(--muted); background: rgba(148, 163, 184, 0.1); border-color: var(--line-strong); }
+
+/* -------------------------------------------------------------- code */
+.code-wrap { position: relative; }
+.code {
+  margin: 0; padding: 12px 13px; overflow: auto; max-height: 340px;
+  background: rgba(4, 8, 12, 0.82); border: 1px solid var(--line); border-radius: 10px;
+  font-family: var(--mono); font-size: 11.6px; line-height: 1.6; color: #cfe3f5;
+  white-space: pre-wrap; word-break: break-word;
+}
+.code--tight { max-height: 220px; }
+.code--tiny { max-height: 150px; opacity: 0.92; }
+.code__copy {
+  position: absolute; top: 8px; right: 8px; padding: 4px 8px; cursor: pointer;
+  font: inherit; font-size: 10.5px; color: var(--muted);
+  background: rgba(18, 27, 38, 0.9); border: 1px solid var(--line); border-radius: 7px;
+  opacity: 0; transition: opacity 140ms ease, color 140ms ease;
+}
+.code-wrap:hover .code__copy { opacity: 1; }
+.code__copy:hover { color: var(--accent); }
+
+/* ------------------------------------------------------------ results */
+.verdict-card { padding: 18px 20px; }
+.verdict-grid { display: flex; align-items: center; gap: 26px; }
+.verdict-summary { display: grid; gap: 8px; }
+.ring { position: relative; width: 116px; height: 116px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring__track { fill: none; stroke: rgba(148, 163, 184, 0.16); stroke-width: 8; }
+.ring__bar { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 600ms cubic-bezier(.22,.61,.36,1); }
+.ring__bar--ok { stroke: var(--ok); }
+.ring__bar--good { stroke: #9ede73; }
+.ring__bar--warn { stroke: var(--warn); }
+.ring__bar--bad { stroke: var(--bad); }
+.ring__text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.05; }
+.ring__text strong { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.ring__text span { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+
+.findings { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 430px; overflow: auto; }
+.finding {
+  display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 10px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: rgba(8, 12, 18, 0.55); border-left: 3px solid var(--line-strong);
+}
+.finding--critical { border-left-color: var(--critical); }
+.finding--high { border-left-color: #ff8a5c; }
+.finding--medium { border-left-color: var(--warn); }
+.finding--low { border-left-color: #8fb8de; }
+.finding--info { border-left-color: rgba(148, 163, 184, 0.5); }
+.finding__sev { font-size: 9.8px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.finding__title { margin: 0; font-size: 12.8px; font-weight: 620; }
+.finding__detail { margin: 3px 0 5px; font-size: 11.8px; color: var(--muted); }
+.finding__id { font-family: var(--mono); font-size: 10.4px; color: rgba(148, 163, 184, 0.72); }
+
+.verdict { display: grid; gap: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(8, 12, 18, 0.55); }
+.verdict--ok { border-color: rgba(53, 208, 127, 0.4); background: rgba(53, 208, 127, 0.07); }
+.verdict--bad { border-color: rgba(240, 104, 122, 0.42); background: rgba(240, 104, 122, 0.07); }
+.verdict--idle { border-color: var(--line-strong); }
+.verdict__head { display: flex; align-items: center; gap: 8px; }
+.verdict__note { margin: 0; font-size: 12.2px; color: var(--text); }
+.empty { margin: 0; font-size: 12.2px; color: var(--muted); font-style: italic; }
+
+.table-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.table { width: 100%; border-collapse: collapse; font-size: 11.8px; }
+.table th {
+  position: sticky; top: 0; text-align: left; padding: 8px 10px; font-size: 10px;
+  letter-spacing: 0.11em; text-transform: uppercase; color: var(--muted);
+  background: rgba(10, 16, 23, 0.96); border-bottom: 1px solid var(--line); font-weight: 600;
+}
+.table td { padding: 7px 10px; border-bottom: 1px solid rgba(148, 163, 184, 0.08); vertical-align: middle; }
+.table tr:last-child td { border-bottom: none; }
+.table code { font-family: var(--mono); font-size: 11px; color: #cfe3f5; }
+.table .num { font-family: var(--mono); color: var(--muted); }
+
+.timeline { display: flex; flex-wrap: wrap; gap: 18px; }
+.kv { display: grid; gap: 1px; min-width: 0; }
+.kv__k { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.kv__v { font-size: 12.4px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.pairs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 18px; }
+.bullets { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 12.2px; color: var(--muted); }
+.bullets li::marker { color: var(--accent); }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.check { display: inline-flex; align-items: center; gap: 7px; font-size: 12.2px; color: var(--text); cursor: pointer; }
+.check input { accent-color: var(--accent); }
+.checks--result { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.checks--result li { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12px; }
+.steps { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 12.3px; color: var(--muted); }
+.steps code { font-family: var(--mono); color: var(--accent); font-size: 11.4px; }
+.steps b { color: var(--text); }
+.urls { margin: 0; padding-left: 20px; display: grid; gap: 7px; font-size: 11.6px; }
+.urls code { font-family: var(--mono); color: var(--text); word-break: break-all; }
+
+.keylist { display: grid; gap: 10px; }
+.key { padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: rgba(8, 12, 18, 0.5); display: grid; gap: 9px; }
+.key__head { display: flex; align-items: center; gap: 8px; }
+.key__id { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.key__rows { display: flex; gap: 20px; }
+.key__thumb { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+/* ------------------------------------------------------------- toasts */
+.toasts { position: fixed; right: 20px; bottom: 20px; display: grid; gap: 9px; z-index: 40; }
+.toast {
+  padding: 10px 14px; border-radius: 10px; font-size: 12.4px; color: var(--text);
+  background: rgba(18, 27, 38, 0.96); border: 1px solid var(--line-strong);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4); animation: toast-in 200ms ease;
+}
+.toast--ok { border-color: rgba(53, 208, 127, 0.5); }
+.toast--bad { border-color: rgba(240, 104, 122, 0.5); }
+.toast--out { opacity: 0; transform: translateY(6px); transition: all 400ms ease; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.22); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.36); background-clip: content-box; }
+::selection { background: rgba(76, 201, 240, 0.28); }
+</style></head>
+<body><div id="app" class="app"></div>
+<script>
+const DEMO = {"/api/health": {"ok": true, "app": "AuthLens", "version": "1.0.0", "uptime": 0, "layers": {"core": {"language": "C++17", "version": "1.0.0", "library": "libauthlens_core.so"}, "main": {"language": "Python", "version": "3.14.10", "library": "authlas-python 0.1.0", "backend": "awslc"}, "ui": {"language": "TypeScript", "version": "1.0.0"}}, "keys": 1, "samples": [{"id": "clean", "label": "Access token", "hint": "ES256 \u00b7 short lived \u00b7 scoped"}, {"id": "hostile", "label": "Hostile token", "hint": "HS256 \u00b7 jku \u00b7 kid traversal \u00b7 no exp"}, {"id": "expired", "label": "Expired ID token", "hint": "exp 5 minutes ago"}, {"id": "sdjwt", "label": "SD-JWT credential", "hint": "2 hidden claims \u00b7 1 decoy"}]}, "/api/keys": {"ok": true, "keys": [{"id": "key-a92946", "alg": "ES256", "curve": "P-256", "created": 1794554151, "public": {"kty": "EC", "crv": "P-256", "x": "ov7iOZKLTfph_V5zvJ8Xpr8NtQpaeZ_wmLPjb5Z8BNw", "y": "sTH4Y4bDzvU4smS4xiAHBoEYL9NGyLBlI7CzwHO_W5I"}, "thumbprint": "2KGcOWDJZc8LC7bCM8zWXHvnQP4u1N7VRnxwIMFm6i8", "thumbprint_native": "2KGcOWDJZc8LC7bCM8zWXHvnQP4u1N7VRnxwIMFm6i8", "thumbprint_agrees": true, "jwk": {"kty": "EC", "crv": "P-256", "x": "ov7iOZKLTfph_V5zvJ8Xpr8NtQpaeZ_wmLPjb5Z8BNw", "y": "sTH4Y4bDzvU4smS4xiAHBoEYL9NGyLBlI7CzwHO_W5I"}}], "default": "key-a92946"}, "analyses": {"eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJhcGk6Ly9vcmRlcnMiLCJleHAiOjE3OTQ1NTQ0MjEsImlhdCI6MTc5NDU1NDEyMSwiaXNzIjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZSIsImp0aSI6IjAxSjhaNEM3UTMiLCJzY29wZSI6Im9yZGVyczpyZWFkIHByb2ZpbGUiLCJzdWIiOiJhbGljZUBleGFtcGxlLmNvbSJ9.LnFeKhrQ02ESoCffETorYfvQ725NmN_MHphPdMo3zukoAuXRbZxzEH8Sj05fJ63PDyr-jd8uqrWR9Y_OB4QW6w": {"ok": true, "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJhcGk6Ly9vcmRlcnMiLCJleHAiOjE3OTQ1NTQ0MjEsImlhdCI6MTc5NDU1NDEyMSwiaXNzIjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZSIsImp0aSI6IjAxSjhaNEM3UTMiLCJzY29wZSI6Im9yZGVyczpyZWFkIHByb2ZpbGUiLCJzdWIiOiJhbGljZUBleGFtcGxlLmNvbSJ9.LnFeKhrQ02ESoCffETorYfvQ725NmN_MHphPdMo3zukoAuXRbZxzEH8Sj05fJ63PDyr-jd8uqrWR9Y_OB4QW6w", "format": "jws", "nbytes": 344, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 40, "bytes": 30, "b64_ok": true, "json": {"alg": "ES256", "typ": "at+jwt"}}, {"role": "payload", "index": -1, "offset": 41, "length": 216, "bytes": 162, "b64_ok": true, "json": {"aud": "api://orders", "exp": 1794554421, "iat": 1794554121, "iss": "https://issuer.example", "jti": "01J8Z4C7Q3", "scope": "orders:read profile", "sub": "alice@example.com"}}, {"role": "signature", "index": -1, "offset": 258, "length": 86, "bytes": 64, "b64_ok": true, "json": null}], "header": {"alg": "ES256", "typ": "at+jwt"}, "payload": {"aud": "api://orders", "exp": 1794554421, "iat": 1794554121, "iss": "https://issuer.example", "jti": "01J8Z4C7Q3", "scope": "orders:read profile", "sub": "alice@example.com"}, "notes": [], "key_binding": null, "risk": {"findings": [{"id": "header.kid.absent", "severity": "info", "title": "No kid", "detail": "Fine for single-key issuers, awkward for rotation and for JWKS lookups."}, {"id": "header.typ", "severity": "info", "title": "typ is at+jwt", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}], "score": 100, "grade": "A"}, "thumbprint": null, "verification": {"ok": true, "source": "session keyring key-a92946", "algs": ["ES256"], "claims": {"aud": "api://orders", "exp": 1794554421, "iat": 1794554121, "iss": "https://issuer.example", "jti": "01J8Z4C7Q3", "scope": "orders:read profile", "sub": "alice@example.com"}, "header": {"alg": "ES256", "typ": "at+jwt"}}, "sd": null, "timeline": {"now": 1794554151, "issued": 1794554121, "issued_in": -30, "expires": 1794554421, "expires_in": 269, "lifetime": 300}}, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ii4uLy4uL2V0Yy9wYXNzd2QiLCJqa3UiOiJodHRwczovL2tleXMuYXR0YWNrZXIuZXhhbXBsZS9qd2tzLmpzb24ifQ.eyJpc3MiOiJodHRwczovL2xlZ2FjeS5leGFtcGxlIiwic3ViIjoic3ZjLWJhdGNoIiwic2NvcGUiOiJhZG1pbjoqIiwiaWF0IjoxNzk0NTQ2OTUxfQ.Zm9yZ2VkLXNpZ25hdHVyZQ": {"ok": true, "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ii4uLy4uL2V0Yy9wYXNzd2QiLCJqa3UiOiJodHRwczovL2tleXMuYXR0YWNrZXIuZXhhbXBsZS9qd2tzLmpzb24ifQ.eyJpc3MiOiJodHRwczovL2xlZ2FjeS5leGFtcGxlIiwic3ViIjoic3ZjLWJhdGNoIiwic2NvcGUiOiJhZG1pbjoqIiwiaWF0IjoxNzk0NTQ2OTUxfQ.Zm9yZ2VkLXNpZ25hdHVyZQ", "format": "jws", "nbytes": 272, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 134, "bytes": 100, "b64_ok": true, "json": {"alg": "HS256", "typ": "JWT", "kid": "../../etc/passwd", "jku": "https://keys.attacker.example/jwks.json"}}, {"role": "payload", "index": -1, "offset": 135, "length": 114, "bytes": 85, "b64_ok": true, "json": {"iss": "https://legacy.example", "sub": "svc-batch", "scope": "admin:*", "iat": 1794546951}}, {"role": "signature", "index": -1, "offset": 250, "length": 22, "bytes": 16, "b64_ok": true, "json": null}], "header": {"alg": "HS256", "typ": "JWT", "kid": "../../etc/passwd", "jku": "https://keys.attacker.example/jwks.json"}, "payload": {"iss": "https://legacy.example", "sub": "svc-batch", "scope": "admin:*", "iat": 1794546951}, "notes": ["header points at a remote key set (jku/x5u)"], "key_binding": null, "risk": {"findings": [{"id": "alg.symmetric", "severity": "high", "title": "Symmetric algorithm HS256", "detail": "Every verifier holds the signing secret, so any of them can forge tokens. Prefer an asymmetric algorithm."}, {"id": "header.jku", "severity": "high", "title": "Remote key set (jku)", "detail": "The key is fetched from a URL the token chooses; allow-list the host before trusting it."}, {"id": "header.kid.traversal", "severity": "high", "title": "kid looks like a path", "detail": "kid is often used to build a key file name; '../../etc/passwd' can escape the key directory."}, {"id": "header.typ", "severity": "info", "title": "typ is JWT", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}, {"id": "claim.exp.missing", "severity": "high", "title": "No exp claim", "detail": "A token without an expiry is valid forever. Resource servers should reject it."}, {"id": "claim.aud.missing", "severity": "high", "title": "No aud claim", "detail": "Without an audience, the token is valid at every resource server that shares the key."}, {"id": "claim.jti.missing", "severity": "low", "title": "No jti claim", "detail": "Without a unique id the token cannot be replay-tracked or revoked individually."}, {"id": "claim.scope.broad", "severity": "medium", "title": "Broad scope", "detail": "Scope contains admin/root/wildcard: admin:*"}], "score": 0, "grade": "F"}, "thumbprint": null, "verification": {"ok": false, "type": "Skip", "kind": "alg-not-allowed", "message": "alg 'HS256' is not in the verifier allow-list."}, "sd": null, "timeline": {"now": 1794554151, "issued": 1794546951, "issued_in": -7200}}, "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhcGk6Ly9yZXBvcnRzIiwiZXhwIjoxNzk0NTUzODUxLCJpYXQiOjE3OTQ1NDUxNTEsImlzcyI6Imh0dHBzOi8vaXNzdWVyLmV4YW1wbGUiLCJqdGkiOiIwMUo4WjRDN1E0Iiwic3ViIjoiYm9iQGV4YW1wbGUuY29tIn0.NEBp0hAO9w8YDF6JZkQQdNxzlU5NKOJGR6_8BMhWQlVP0kvIHz0SYs4EQS-BBr1oZKYGMKW38_t0w2Dj3dDQ_A": {"ok": true, "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhcGk6Ly9yZXBvcnRzIiwiZXhwIjoxNzk0NTUzODUxLCJpYXQiOjE3OTQ1NDUxNTEsImlzcyI6Imh0dHBzOi8vaXNzdWVyLmV4YW1wbGUiLCJqdGkiOiIwMUo4WjRDN1E0Iiwic3ViIjoiYm9iQGV4YW1wbGUuY29tIn0.NEBp0hAO9w8YDF6JZkQQdNxzlU5NKOJGR6_8BMhWQlVP0kvIHz0SYs4EQS-BBr1oZKYGMKW38_t0w2Dj3dDQ_A", "format": "jws", "nbytes": 299, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 36, "bytes": 27, "b64_ok": true, "json": {"alg": "ES256", "typ": "JWT"}}, {"role": "payload", "index": -1, "offset": 37, "length": 175, "bytes": 131, "b64_ok": true, "json": {"aud": "api://reports", "exp": 1794553851, "iat": 1794545151, "iss": "https://issuer.example", "jti": "01J8Z4C7Q4", "sub": "bob@example.com"}}, {"role": "signature", "index": -1, "offset": 213, "length": 86, "bytes": 64, "b64_ok": true, "json": null}], "header": {"alg": "ES256", "typ": "JWT"}, "payload": {"aud": "api://reports", "exp": 1794553851, "iat": 1794545151, "iss": "https://issuer.example", "jti": "01J8Z4C7Q4", "sub": "bob@example.com"}, "notes": [], "key_binding": null, "risk": {"findings": [{"id": "header.kid.absent", "severity": "info", "title": "No kid", "detail": "Fine for single-key issuers, awkward for rotation and for JWKS lookups."}, {"id": "header.typ", "severity": "info", "title": "typ is JWT", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}, {"id": "claim.exp.past", "severity": "high", "title": "Expired", "detail": "exp is 300s in the past."}], "score": 82, "grade": "B"}, "thumbprint": null, "verification": {"ok": false, "source": "session keyring key-a92946", "algs": ["ES256"], "type": "CoreError", "kind": "claim", "message": "claim: claim: token has expired"}, "sd": null, "timeline": {"now": 1794554151, "issued": 1794545151, "issued_in": -9000, "expires": 1794553851, "expires_in": -300, "lifetime": 8700}}, "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiTUV1Yk5HczdSMXFhY2tCbHNRcllaMm1oYTU5THBqSjFfeWhEV0RnaUxacyIsImdnNUs5QXl4TVp0NzUwOXBTTTRiZGszQlZvdUVnM0wxR09HNTZMckpkakkiLCJ6a2JQN2FYNlJtQVcxazNTSFA3dERwVmtLczhsVlVqNjVXMEZmNUZIT3VRIl0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.jaA7AAkjmpB3qK76wSiwBrTWAHb0xKKBG3yhryiUkvdM_lUAdxWSc5VkhgmpQFOoQs9b07WIe0CdiJmnQhqflQ~WyJWazZBbk5taFRJTEppRGF3d2ZyRHZnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~WyJqTU0yMnVweXMxNHdwSXBlcWJuZ2l3IiwiYWdlX292ZXJfMTgiLHRydWVd~": {"ok": true, "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiTUV1Yk5HczdSMXFhY2tCbHNRcllaMm1oYTU5THBqSjFfeWhEV0RnaUxacyIsImdnNUs5QXl4TVp0NzUwOXBTTTRiZGszQlZvdUVnM0wxR09HNTZMckpkakkiLCJ6a2JQN2FYNlJtQVcxazNTSFA3dERwVmtLczhsVlVqNjVXMEZmNUZIT3VRIl0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.jaA7AAkjmpB3qK76wSiwBrTWAHb0xKKBG3yhryiUkvdM_lUAdxWSc5VkhgmpQFOoQs9b07WIe0CdiJmnQhqflQ~WyJWazZBbk5taFRJTEppRGF3d2ZyRHZnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~WyJqTU0yMnVweXMxNHdwSXBlcWJuZ2l3IiwiYWdlX292ZXJfMTgiLHRydWVd~", "format": "sd-jwt", "nbytes": 620, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 44, "bytes": 33, "b64_ok": true, "json": {"alg": "ES256", "typ": "dc+sd-jwt"}}, {"role": "payload", "index": -1, "offset": 45, "length": 362, "bytes": 271, "b64_ok": true, "json": {"_sd": ["MEubNGs7R1qackBlsQrYZ2mha59LpjJ1_yhDWDgiLZs", "gg5K9AyxMZt7509pSM4bdk3BVouEg3L1GOG56LrJdjI", "zkbP7aX6RmAW1k3SHP7tDpVkKs8lVUj65W0Ff5FHOuQ"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "iss": "https://issuer.example", "sub": "alice@example.com"}}, {"role": "signature", "index": -1, "offset": 408, "length": 86, "bytes": 64, "b64_ok": true, "json": null}], "header": {"alg": "ES256", "typ": "dc+sd-jwt"}, "payload": {"_sd": ["MEubNGs7R1qackBlsQrYZ2mha59LpjJ1_yhDWDgiLZs", "gg5K9AyxMZt7509pSM4bdk3BVouEg3L1GOG56LrJdjI", "zkbP7aX6RmAW1k3SHP7tDpVkKs8lVUj65W0Ff5FHOuQ"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "iss": "https://issuer.example", "sub": "alice@example.com"}, "notes": [], "key_binding": null, "risk": {"findings": [{"id": "header.kid.absent", "severity": "info", "title": "No kid", "detail": "Fine for single-key issuers, awkward for rotation and for JWKS lookups."}, {"id": "header.typ", "severity": "info", "title": "typ is dc+sd-jwt", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}, {"id": "claim.exp.missing", "severity": "high", "title": "No exp claim", "detail": "A token without an expiry is valid forever. Resource servers should reject it."}, {"id": "claim.aud.missing", "severity": "high", "title": "No aud claim", "detail": "Without an audience, the token is valid at every resource server that shares the key."}, {"id": "claim.jti.missing", "severity": "low", "title": "No jti claim", "detail": "Without a unique id the token cannot be replay-tracked or revoked individually."}], "score": 61, "grade": "C"}, "thumbprint": null, "verification": {"ok": false, "source": "session keyring key-a92946", "algs": ["ES256"], "type": "CoreError", "kind": "malformed", "message": "malformed: malformed: base64url: Invalid symbol 126, offset 86."}, "sd": {"hash": "sha-256", "digests": [{"index": 0, "bytes": 63, "digest": "gg5K9AyxMZt7509pSM4bdk3BVouEg3L1GOG56LrJdjI", "json": ["Vk6AnNmhTILJiDawwfrDvg", "given_name", "Alice"]}, {"index": 1, "bytes": 60, "digest": "zkbP7aX6RmAW1k3SHP7tDpVkKs8lVUj65W0Ff5FHOuQ", "json": ["jMM22upys14wpIpeqbngiw", "age_over_18", true]}], "match": {"hash": "sha-256", "pairs": [{"digest": "MEubNGs7R1qackBlsQrYZ2mha59LpjJ1_yhDWDgiLZs", "disclosure": null}, {"digest": "gg5K9AyxMZt7509pSM4bdk3BVouEg3L1GOG56LrJdjI", "disclosure": 0}, {"digest": "zkbP7aX6RmAW1k3SHP7tDpVkKs8lVUj65W0Ff5FHOuQ", "disclosure": 1}], "matched": 2, "digest_count": 3, "unused_disclosures": []}, "disclosure_count": 2, "visible_claims": ["address", "iss", "sub"], "hidden_digests": 3}, "timeline": {"now": 1794554151}}}, "clean_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJhdWQiOiJhcGk6Ly9vcmRlcnMiLCJleHAiOjE3OTQ1NTQ0MjEsImlhdCI6MTc5NDU1NDEyMSwiaXNzIjoiaHR0cHM6Ly9pc3N1ZXIuZXhhbXBsZSIsImp0aSI6IjAxSjhaNEM3UTMiLCJzY29wZSI6Im9yZGVyczpyZWFkIHByb2ZpbGUiLCJzdWIiOiJhbGljZUBleGFtcGxlLmNvbSJ9.LnFeKhrQ02ESoCffETorYfvQ725NmN_MHphPdMo3zukoAuXRbZxzEH8Sj05fJ63PDyr-jd8uqrWR9Y_OB4QW6w", "/api/sdjwt/issue": {"ok": true, "sd_jwt": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiSHhWbEh4SmFWVXpObHFBWWdCU1lpR0dPbmViZmc4ckNGdjNyeklzMm1rZyIsIldNZXktX0tsdF84MjM1Ym1kc3pDWmh6UGJSODVNUXdydzZyM1J2a3RobHMiLCJxRkNTdnRHR1BlVElqVF93RUNmcHRxZDhPMFlGcVJfblJmRGFyTUt0Rno0Il0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJmYW1pbHlfbmFtZSI6IkxpZGRlbGwiLCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.7KbsekH_XfKBby9Lvgbqmr9cQCcAn4tcWnZsqgwgX_xdFTOw07gyLFfzXZT75mFzEZ7kIHEeIcdKYYpfLSnrmA~WyJBbVlpYUE0R3hDRFBJcWJHYUdwOVBnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~WyI3cHFrY1ZScE8zRVZTTmd3V1l3MjF3IiwiYWdlX292ZXJfMTgiLHRydWVd~", "disclosures": ["WyJBbVlpYUE0R3hDRFBJcWJHYUdwOVBnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0", "WyI3cHFrY1ZScE8zRVZTTmd3V1l3MjF3IiwiYWdlX292ZXJfMTgiLHRydWVd"], "analysis": {"ok": true, "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiSHhWbEh4SmFWVXpObHFBWWdCU1lpR0dPbmViZmc4ckNGdjNyeklzMm1rZyIsIldNZXktX0tsdF84MjM1Ym1kc3pDWmh6UGJSODVNUXdydzZyM1J2a3RobHMiLCJxRkNTdnRHR1BlVElqVF93RUNmcHRxZDhPMFlGcVJfblJmRGFyTUt0Rno0Il0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJmYW1pbHlfbmFtZSI6IkxpZGRlbGwiLCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.7KbsekH_XfKBby9Lvgbqmr9cQCcAn4tcWnZsqgwgX_xdFTOw07gyLFfzXZT75mFzEZ7kIHEeIcdKYYpfLSnrmA~WyJBbVlpYUE0R3hDRFBJcWJHYUdwOVBnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~WyI3cHFrY1ZScE8zRVZTTmd3V1l3MjF3IiwiYWdlX292ZXJfMTgiLHRydWVd~", "format": "sd-jwt", "nbytes": 652, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 44, "bytes": 33, "b64_ok": true, "json": {"alg": "ES256", "typ": "dc+sd-jwt"}}, {"role": "payload", "index": -1, "offset": 45, "length": 394, "bytes": 295, "b64_ok": true, "json": {"_sd": ["HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "family_name": "Liddell", "iss": "https://issuer.example", "sub": "alice@example.com"}}, {"role": "signature", "index": -1, "offset": 440, "length": 86, "bytes": 64, "b64_ok": true, "json": null}], "header": {"alg": "ES256", "typ": "dc+sd-jwt"}, "payload": {"_sd": ["HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "family_name": "Liddell", "iss": "https://issuer.example", "sub": "alice@example.com"}, "notes": [], "key_binding": null, "risk": {"findings": [{"id": "header.kid.absent", "severity": "info", "title": "No kid", "detail": "Fine for single-key issuers, awkward for rotation and for JWKS lookups."}, {"id": "header.typ", "severity": "info", "title": "typ is dc+sd-jwt", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}, {"id": "claim.exp.missing", "severity": "high", "title": "No exp claim", "detail": "A token without an expiry is valid forever. Resource servers should reject it."}, {"id": "claim.aud.missing", "severity": "high", "title": "No aud claim", "detail": "Without an audience, the token is valid at every resource server that shares the key."}, {"id": "claim.jti.missing", "severity": "low", "title": "No jti claim", "detail": "Without a unique id the token cannot be replay-tracked or revoked individually."}], "score": 61, "grade": "C"}, "thumbprint": null, "verification": {"ok": false, "type": "Skip", "kind": "needs-policy", "message": "authlas requires an expected issuer and audience before it will verify.", "source": "session keyring key-a92946"}, "sd": {"hash": "sha-256", "digests": [{"index": 0, "bytes": 63, "digest": "HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "json": ["AmYiaA4GxCDPIqbGaGp9Pg", "given_name", "Alice"]}, {"index": 1, "bytes": 60, "digest": "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "json": ["7pqkcVRpO3EVSNgwWYw21w", "age_over_18", true]}], "match": {"hash": "sha-256", "pairs": [{"digest": "HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "disclosure": 0}, {"digest": "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "disclosure": 1}, {"digest": "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4", "disclosure": null}], "matched": 2, "digest_count": 3, "unused_disclosures": []}, "disclosure_count": 2, "visible_claims": ["address", "family_name", "iss", "sub"], "hidden_digests": 3}, "timeline": {"now": 1794554151}}}, "/api/sdjwt/present": {"ok": true, "presentation": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiSHhWbEh4SmFWVXpObHFBWWdCU1lpR0dPbmViZmc4ckNGdjNyeklzMm1rZyIsIldNZXktX0tsdF84MjM1Ym1kc3pDWmh6UGJSODVNUXdydzZyM1J2a3RobHMiLCJxRkNTdnRHR1BlVElqVF93RUNmcHRxZDhPMFlGcVJfblJmRGFyTUt0Rno0Il0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJmYW1pbHlfbmFtZSI6IkxpZGRlbGwiLCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.7KbsekH_XfKBby9Lvgbqmr9cQCcAn4tcWnZsqgwgX_xdFTOw07gyLFfzXZT75mFzEZ7kIHEeIcdKYYpfLSnrmA~WyJBbVlpYUE0R3hDRFBJcWJHYUdwOVBnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~", "revealed": 1, "analysis": {"ok": true, "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJfc2QiOlsiSHhWbEh4SmFWVXpObHFBWWdCU1lpR0dPbmViZmc4ckNGdjNyeklzMm1rZyIsIldNZXktX0tsdF84MjM1Ym1kc3pDWmh6UGJSODVNUXdydzZyM1J2a3RobHMiLCJxRkNTdnRHR1BlVElqVF93RUNmcHRxZDhPMFlGcVJfblJmRGFyTUt0Rno0Il0sIl9zZF9hbGciOiJzaGEtMjU2IiwiYWRkcmVzcyI6eyJjb3VudHJ5IjoiREUiLCJsb2NhbGl0eSI6IkJlcmxpbiJ9LCJmYW1pbHlfbmFtZSI6IkxpZGRlbGwiLCJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2VAZXhhbXBsZS5jb20ifQ.7KbsekH_XfKBby9Lvgbqmr9cQCcAn4tcWnZsqgwgX_xdFTOw07gyLFfzXZT75mFzEZ7kIHEeIcdKYYpfLSnrmA~WyJBbVlpYUE0R3hDRFBJcWJHYUdwOVBnIiwiZ2l2ZW5fbmFtZSIsIkFsaWNlIl0~", "format": "sd-jwt", "nbytes": 591, "segments": [{"role": "header", "index": -1, "offset": 0, "length": 44, "bytes": 33, "b64_ok": true, "json": {"alg": "ES256", "typ": "dc+sd-jwt"}}, {"role": "payload", "index": -1, "offset": 45, "length": 394, "bytes": 295, "b64_ok": true, "json": {"_sd": ["HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "family_name": "Liddell", "iss": "https://issuer.example", "sub": "alice@example.com"}}, {"role": "signature", "index": -1, "offset": 440, "length": 86, "bytes": 64, "b64_ok": true, "json": null}], "header": {"alg": "ES256", "typ": "dc+sd-jwt"}, "payload": {"_sd": ["HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4"], "_sd_alg": "sha-256", "address": {"country": "DE", "locality": "Berlin"}, "family_name": "Liddell", "iss": "https://issuer.example", "sub": "alice@example.com"}, "notes": [], "key_binding": null, "risk": {"findings": [{"id": "header.kid.absent", "severity": "info", "title": "No kid", "detail": "Fine for single-key issuers, awkward for rotation and for JWKS lookups."}, {"id": "header.typ", "severity": "info", "title": "typ is dc+sd-jwt", "detail": "Explicit typing keeps access tokens from being replayed as ID tokens."}, {"id": "claim.exp.missing", "severity": "high", "title": "No exp claim", "detail": "A token without an expiry is valid forever. Resource servers should reject it."}, {"id": "claim.aud.missing", "severity": "high", "title": "No aud claim", "detail": "Without an audience, the token is valid at every resource server that shares the key."}, {"id": "claim.jti.missing", "severity": "low", "title": "No jti claim", "detail": "Without a unique id the token cannot be replay-tracked or revoked individually."}], "score": 61, "grade": "C"}, "thumbprint": null, "verification": {"ok": false, "type": "Skip", "kind": "no-key", "message": "Provide a JWKS or pick a session key to run signature verification."}, "sd": {"hash": "sha-256", "digests": [{"index": 0, "bytes": 63, "digest": "HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "json": ["AmYiaA4GxCDPIqbGaGp9Pg", "given_name", "Alice"]}], "match": {"hash": "sha-256", "pairs": [{"digest": "HxVlHxJaVUzNlqAYgBSYiGGOnebfg8rCFv3rzIs2mkg", "disclosure": 0}, {"digest": "WMey-_Klt_8235bmdszCZhzPbR85MQwrw6r3Rvkthls", "disclosure": null}, {"digest": "qFCSvtGGPeTIjT_wECfptqd8O0YFqR_nRfDarMKtFz4", "disclosure": null}], "matched": 1, "digest_count": 3, "unused_disclosures": []}, "disclosure_count": 1, "visible_claims": ["address", "family_name", "iss", "sub"], "hidden_digests": 3}, "timeline": {"now": 1794554151}}}, "/api/sdjwt/verify": {"ok": true, "claims": {"address": {"country": "DE", "locality": "Berlin"}, "age_over_18": true, "family_name": "Liddell", "given_name": "Alice", "iss": "https://issuer.example", "sub": "alice@example.com"}, "header": {"alg": "ES256", "typ": "dc+sd-jwt"}, "key_binding_verified": false, "issuer": "https://issuer.example"}, "/api/pkce": {"ok": true, "generated": {"challenge": "dP_ypvb2zyIL5X8iO3TwGd4ijsJpiZhObH1fZGwoTJw", "method": "S256", "verifier": "NNNPuZjrCfYU74mzEAy6kJ4EbKUgs1wJhCJntUI5FA8"}, "pkce": {"ok": true, "message": "challenge matches the verifier (S256)"}, "redirects": [{"kind": "web", "uri": "http://app.example/cb", "ok": false, "message": "CoreError: malformed: malformed: http redirect_uri is only allowed on 127.0.0.1 or [::1]"}, {"kind": "native", "uri": "com.example.app:/oauth2redirect", "ok": true, "message": "accepted"}], "redirect_match": false, "scope": {"ok": false, "excess": ["admin"]}}, "/api/discovery": {"ok": true, "issuer": "https://issuer.example", "metadata_urls": ["https://issuer.example/.well-known/openid-configuration", "https://issuer.example/.well-known/oauth-authorization-server"], "protected_resource_url": "https://issuer.example/.well-known/oauth-protected-resource", "canonical_resource": "https://api.example/orders", "resource_metadata_url": "https://api.example/.well-known/oauth-protected-resource/orders"}, "/api/challenge": {"ok": true, "challenges": [{"scheme": "Bearer", "params": {"realm": "api", "error": "insufficient_scope", "scope": "orders:write", "resource_metadata": "https://api.example/.well-known/oauth-protected-resource/orders"}}], "rebuilt": "Bearer realm=\"api\", scope=\"orders:write\", error=\"insufficient_scope\", resource_metadata=\"https://api.example/.well-known/oauth-protected-resource/orders\""}, "/api/dcql": {"ok": true, "valid": true, "selection": {"paths": [], "option": null}, "satisfiable": true, "query_ids": ["pid"]}};
+window.fetch = async function (url, opts) {
+  const path = String(url);
+  let body = {};
+  try { body = JSON.parse((opts && opts.body) || "{}"); } catch (e) {}
+  let data;
+  if (path === "/api/analyze") {
+    data = DEMO.analyses[body.token] || DEMO.analyses[DEMO.clean_token];
+  } else if (path === "/api/mint") {
+    data = DEMO.analyses[DEMO.clean_token];
+    data = {ok: true, token: DEMO.clean_token, alg: "ES256", typ: "at+jwt", claims: {}, analysis: data};
+  } else { data = DEMO[path]; }
+  if (typeof data === "undefined") data = {ok: false, message: "offline showcase: no canned response for " + path};
+  return { ok: true, status: 200, text: async function () { return JSON.stringify(data); } };
+};
+</script>
+<script>/* ---- dom.js ---- */
+/** Tiny DOM layer: no framework, no virtual DOM, just functions. */
+function h(tag, props = null, ...children) {
+    const node = document.createElement(tag);
+    if (props) {
+        for (const [key, value] of Object.entries(props)) {
+            if (value === null || value === undefined || value === false)
+                continue;
+            if (key === "class")
+                node.className = String(value);
+            else if (key === "text")
+                node.textContent = String(value);
+            else if (key === "html")
+                node.innerHTML = String(value);
+            else if (key === "dataset")
+                Object.assign(node.dataset, value);
+            else if (key.startsWith("on") && typeof value === "function") {
+                node.addEventListener(key.slice(2).toLowerCase(), value);
+            }
+            else if (key in node && key !== "list") {
+                node[key] = value;
+            }
+            else {
+                node.setAttribute(key, String(value));
+            }
+        }
+    }
+    for (const child of children) {
+        if (child === null || child === undefined || child === false)
+            continue;
+        node.append(typeof child === "string" || typeof child === "number" ? String(child) : child);
+    }
+    return node;
+}
+function clear(node) {
+    node.replaceChildren();
+    return node;
+}
+function toast(message, kind = "info") {
+    let host = document.querySelector(".toasts");
+    if (!host) {
+        host = h("div", { class: "toasts" });
+        document.body.append(host);
+    }
+    const item = h("div", { class: `toast toast--${kind}`, text: message });
+    host.append(item);
+    setTimeout(() => item.classList.add("toast--out"), 2600);
+    setTimeout(() => item.remove(), 3100);
+}
+async function copy(text, label = "Copied") {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast(`${label} to clipboard`, "ok");
+    }
+    catch {
+        toast("Clipboard blocked by the browser", "bad");
+    }
+}
+function pretty(value) {
+    return JSON.stringify(value, null, 2);
+}
+function bytes(n) {
+    return n < 1000 ? `${n} B` : `${(n / 1000).toFixed(1)} kB`;
+}
+
+/* ---- api.js ---- */
+/** Typed-ish fetch helpers for the Python API. */
+async function api(path, body) {
+    const res = await fetch(path, {
+        method: body === undefined ? "GET" : "POST",
+        headers: body === undefined ? {} : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data;
+    try {
+        data = JSON.parse(text);
+    }
+    catch {
+        throw new Error(`${res.status}: ${text.slice(0, 200)}`);
+    }
+    if (!res.ok) {
+        const err = data;
+        throw new Error(err.message ?? `request failed (${res.status})`);
+    }
+    return data;
+}
+
+/* ---- ui.js ---- */
+/** Shared building blocks: cards, code blocks, fields, badges. */
+
+function card(title, subtitle, ...body) {
+    return h("section", { class: "card" }, h("header", { class: "card__head" }, h("h2", { class: "card__title", text: title }), subtitle ? h("p", { class: "card__sub", text: subtitle }) : null), h("div", { class: "card__body" }, ...body));
+}
+function code(text, cls = "", label = "Copy") {
+    const block = h("pre", { class: `code ${cls}` }, h("code", { text }));
+    const btn = h("button", { class: "code__copy", type: "button", text: label });
+    btn.addEventListener("click", () => void copy(text));
+    return h("div", { class: "code-wrap" }, block, btn);
+}
+function field(label, control, hint = "") {
+    return h("label", { class: "field" }, h("span", { class: "field__label", text: label }), control, hint ? h("span", { class: "field__hint", text: hint }) : null);
+}
+function input(props = {}) {
+    return h("input", { class: "input", spellcheck: false, ...props });
+}
+function textarea(props = {}) {
+    return h("textarea", { class: "input input--area", spellcheck: false, ...props });
+}
+function select(options, value) {
+    const el = h("select", { class: "input input--select" });
+    for (const opt of options) {
+        const o = h("option", { value: opt.value, text: opt.label });
+        if (opt.value === value)
+            o.selected = true;
+        el.append(o);
+    }
+    return el;
+}
+function button(label, onClick, kind = "primary") {
+    const el = h("button", { class: `btn btn--${kind}`, type: "button" }, h("span", { text: label }));
+    el.addEventListener("click", onClick);
+    return el;
+}
+function badge(text, kind = "") {
+    return h("span", { class: `badge ${kind ? `badge--${kind}` : ""}`, text });
+}
+function kv(label, value, mono = false) {
+    return h("div", { class: "kv" }, h("span", { class: "kv__k", text: label }), h("span", { class: `kv__v ${mono ? "mono" : ""}`, text: String(value) }));
+}
+function empty(text) {
+    return h("p", { class: "empty", text });
+}
+function spinner() {
+    return h("span", { class: "spinner" });
+}
+
+/* ---- views/analyze.js ---- */
+/** Token analyser: the native scan, the risk heuristics and the authlas verdict. */
+
+
+
+const SEV_ORDER = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+function scoreRing(score, grade) {
+    const r = 42;
+    const circumference = 2 * Math.PI * r;
+    const offset = circumference * (1 - Math.max(0, Math.min(100, score)) / 100);
+    const tone = score >= 90 ? "ok" : score >= 75 ? "good" : score >= 60 ? "warn" : "bad";
+    const el = h("div", { class: "ring" });
+    el.innerHTML = `
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="ring__track" cx="50" cy="50" r="${r}"></circle>
+      <circle class="ring__bar ring__bar--${tone}" cx="50" cy="50" r="${r}"
+        stroke-dasharray="${circumference.toFixed(1)}"
+        stroke-dashoffset="${offset.toFixed(1)}"></circle>
+    </svg>
+    <div class="ring__text"><strong>${score}</strong><span>grade ${grade}</span></div>`;
+    return el;
+}
+function findingsList(findings) {
+    if (!findings.length)
+        return empty("Nothing to report — the token carries no risky header or claim shape.");
+    const sorted = [...findings].sort((a, b) => (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9));
+    return h("ul", { class: "findings" }, ...sorted.map((f) => h("li", { class: `finding finding--${f.severity}` }, h("span", { class: "finding__sev", text: f.severity }), h("div", { class: "finding__body" }, h("p", { class: "finding__title", text: f.title }), h("p", { class: "finding__detail", text: f.detail }), h("code", { class: "finding__id", text: f.id })))));
+}
+function verificationPanel(v) {
+    if (!v)
+        return empty("No verification was attempted.");
+    if (v.ok) {
+        return h("div", { class: "verdict verdict--ok" }, h("div", { class: "verdict__head" }, badge("verified", "ok"), h("span", { class: "muted", text: v.source ?? "" })), h("p", { class: "verdict__note", text: `Signature, iss, aud and exp accepted for alg ${(v.algs ?? []).join(", ")}.` }), code(pretty(v.claims ?? {}), "code--tight", "Copy claims"));
+    }
+    const skipped = v.kind === "needs-policy" || v.kind === "no-key" || v.kind === "bad-jwks";
+    return h("div", { class: `verdict ${skipped ? "verdict--idle" : "verdict--bad"}` }, h("div", { class: "verdict__head" }, badge(v.type ?? "error", skipped ? "idle" : "bad"), v.kind ? h("code", { class: "finding__id", text: String(v.kind) }) : null), h("p", { class: "verdict__note", text: v.message ?? "rejected" }), v.source ? h("p", { class: "muted", text: `key source: ${v.source}` }) : null);
+}
+function structure(analysis) {
+    const table = h("table", { class: "table" }, h("thead", null, h("tr", null, ...["segment", "offset", "chars", "bytes", "b64", "json"].map((t) => h("th", { text: t })))), h("tbody", null, ...analysis.segments.map((s) => h("tr", null, h("td", null, h("code", { text: s.role })), h("td", { class: "num", text: String(s.offset) }), h("td", { class: "num", text: String(s.length) }), h("td", { class: "num", text: String(s.bytes) }), h("td", null, badge(s.b64_ok ? "ok" : "bad", s.b64_ok ? "ok" : "bad")), h("td", null, s.json ? badge("parsed", "ok") : h("span", { class: "muted", text: "—" }))))));
+    const t = analysis.timeline;
+    const timeline = t
+        ? h("div", { class: "timeline" }, kv("lifetime", t.lifetime !== undefined ? `${t.lifetime}s` : "—"), kv("expires in", t.expires_in !== undefined ? `${t.expires_in}s` : "—"), kv("issued", t.issued ? new Date(t.issued * 1000).toLocaleString() : "—"))
+        : null;
+    return h("div", { class: "stack" }, table, timeline);
+}
+function analyzeView() {
+    const tokenBox = textarea({ rows: 3, placeholder: "Paste a compact JWS, JWE or SD-JWT…" });
+    const result = h("div", { class: "stack result" });
+    const chips = h("div", { class: "chips" });
+    const keySelect = select([{ value: "", label: "No key (structure only)" }]);
+    const jwksBox = textarea({ rows: 3, placeholder: "Optional JWKS: {\"keys\":[…]} — paste an issuer's key set to verify against it" });
+    const issuerBox = input({ placeholder: "https://issuer.example" });
+    const audienceBox = input({ placeholder: "api://orders" });
+    const status = h("span", { class: "muted mono", text: "idle" });
+    const run = async () => {
+        const token = tokenBox.value.trim();
+        if (!token) {
+            toast("Paste a token first — or pick a sample", "bad");
+            return;
+        }
+        status.textContent = "analysing…";
+        try {
+            const body = { token, issuer: issuerBox.value.trim(), audience: audienceBox.value.trim() };
+            if (keySelect.value)
+                body.key_id = keySelect.value;
+            if (jwksBox.value.trim())
+                body.jwks = jwksBox.value.trim();
+            const analysis = await api("/api/analyze", body);
+            status.textContent = `${analysis.format} · ${analysis.nbytes} B`;
+            const kids = [
+                analysis.risk
+                    ? h("section", { class: `card verdict-card grade-${analysis.risk.grade}` }, h("div", { class: "verdict-grid" }, scoreRing(analysis.risk.score, analysis.risk.grade), h("div", { class: "verdict-summary" }, h("h2", { class: "card__title", text: analysis.risk.score >= 90 ? "Structurally sound" :
+                            analysis.risk.score >= 60 ? "Needs review" : "Do not ship this token" }), h("p", { class: "card__sub", text: `${analysis.risk.findings.length} observation(s) from the native analyser, ${analysis.format.toUpperCase()}, ${analysis.nbytes} bytes.` }), h("div", { class: "chips" }, ...["critical", "high", "medium", "low", "info"].map((sev) => {
+                        const n = analysis.risk.findings.filter((f) => f.severity === sev).length;
+                        return badge(`${n} ${sev}`, n ? sev : "idle");
+                    })))))
+                    : empty("This token has no decodable header and payload, so the analyser stayed silent."),
+                h("div", { class: "grid-2" }, card("Findings", "Heuristics run in C++ over the decoded header and payload", findingsList(analysis.risk?.findings ?? [])), card("Verification", "Policy and signature by authlas-python", verificationPanel(analysis.verification))),
+                h("div", { class: "grid-2" }, card("Decoded header", "Protected header as JSON", analysis.header ? code(pretty(analysis.header), "code--tight") : empty("not JSON")), card("Decoded payload", analysis.sd ? "Issuer-signed payload, minus the hidden claims" : "Claims as JSON", analysis.payload ? code(pretty(analysis.payload), "code--tight") : empty("not JSON"))),
+                card("Compact structure", "Offset and decoded size of every segment, measured natively", structure(analysis)),
+                analysis.sd
+                    ? card("Selective disclosure", `${analysis.sd.hash} · ${analysis.sd.match.matched}/${analysis.sd.match.digest_count} digests matched`, h("div", { class: "table-scroll" }, h("table", { class: "table" }, h("thead", null, h("tr", null, ...["#", "claim", "value", "digest (sha-256)", "in _sd"].map((t) => h("th", { text: t })))), h("tbody", null, ...analysis.sd.digests.map((d) => {
+                        const claims = Array.isArray(d.json) ? d.json : [];
+                        const matched = analysis.sd.match.pairs.some((p) => p.disclosure === d.index);
+                        return h("tr", null, h("td", { class: "num", text: String(d.index) }), h("td", null, h("code", { text: String(claims[1] ?? "—") })), h("td", null, h("code", { text: JSON.stringify(claims[2] ?? null) })), h("td", null, h("code", { class: "trunc", text: d.digest })), h("td", null, badge(matched ? "yes" : "no", matched ? "ok" : "bad")));
+                    })))))
+                    : undefined,
+                analysis.notes.length
+                    ? h("section", { class: "card card--notes" }, h("header", { class: "card__head" }, h("h2", { class: "card__title", text: "Structural notes" })), h("ul", { class: "bullets" }, ...analysis.notes.map((n) => h("li", { text: n }))))
+                    : undefined,
+            ];
+            result.replaceChildren(...kids.filter((n) => n != null));
+        }
+        catch (e) {
+            status.textContent = "failed";
+            toast(e.message, "bad");
+        }
+    };
+    const loadSamples = async () => {
+        const health = await api("/api/health");
+        for (const sample of health.samples) {
+            const chip = h("button", { class: "chip", type: "button" }, h("span", { class: "chip__label", text: sample.label }), h("span", { class: "chip__hint", text: sample.hint }));
+            chip.addEventListener("click", () => {
+                tokenBox.value = sample.token;
+                void run();
+            });
+            chips.append(chip);
+        }
+        const keys = await api("/api/keys");
+        for (const key of keys.keys) {
+            keySelect.append(h("option", { value: key.id, text: `${key.id} · ${key.curve} · ${key.alg}` }));
+        }
+    };
+    tokenBox.addEventListener("keydown", (ev) => {
+        if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter")
+            void run();
+    });
+    const view = h("div", { class: "view" }, card("Token under inspection", "Nothing leaves this machine: the analyser is native, the verdict is local", chips, tokenBox, h("div", { class: "toolbar" }, button("Analyse ⌘↵", () => void run()), button("Clear", () => { tokenBox.value = ""; result.replaceChildren(); status.textContent = "idle"; }, "quiet"), h("span", { class: "spacer" }), status)), h("div", { class: "grid-2" }, card("Verify against", "authlas needs an expected issuer and audience before it will check a signature", field("Key source", keySelect), h("div", { class: "row" }, field("Expected issuer", issuerBox), field("Expected audience", audienceBox)), field("…or paste a JWKS", jwksBox, "The key is picked by kid, or the first key when the header has none."))), result);
+    void loadSamples().catch((e) => toast(e.message, "bad"));
+    return view;
+}
+
+/* ---- views/keys.js ---- */
+/** Keyring and signing: key generation, RFC 7638 thumbs, token minting. */
+
+
+
+const SAMPLE_CLAIMS = {
+    iss: "https://issuer.example",
+    sub: "alice@example.com",
+    aud: "api://orders",
+    scope: "orders:read",
+    jti: "01J8Z4C7Q3",
+};
+function keysView() {
+    const list = h("div", { class: "keylist" });
+    const curve = select([{ value: "P-256", label: "P-256 · ES256" }, { value: "P-384", label: "P-384 · ES384" }, { value: "P-521", label: "P-521 · ES512" }]);
+    const mintKey = select([]);
+    const typ = select([{ value: "at+jwt", label: "at+jwt — access token" }, { value: "JWT", label: "JWT — generic" }, { value: "dc+sd-jwt", label: "dc+sd-jwt" }]);
+    const claims = textarea({ rows: 8 });
+    claims.value = pretty(SAMPLE_CLAIMS);
+    const output = h("div", { class: "stack" });
+    const refresh = async () => {
+        const data = await api("/api/keys");
+        list.replaceChildren(...data.keys.map((key) => h("article", { class: "key" }, h("div", { class: "key__head" }, h("code", { class: "key__id", text: key.id }), badge(key.alg, "ok"), key.id === data.default ? badge("default", "idle") : null), h("div", { class: "key__rows" }, kv("curve", key.curve), kv("created", new Date(key.created * 1000).toLocaleTimeString())), h("div", { class: "key__thumb" }, h("span", { class: "kv__k", text: "RFC 7638 thumbprint" }), h("code", { class: "mono trunc", text: key.thumbprint }), badge(key.thumbprint_agrees ? "authlas = C++ core" : "MISMATCH", key.thumbprint_agrees ? "ok" : "bad")), code(pretty(key.jwk), "code--tiny", "Copy public JWK"))));
+        mintKey.replaceChildren(...data.keys.map((k) => h("option", { value: k.id, text: `${k.id} · ${k.alg}` })));
+        if (!mintKey.value)
+            mintKey.value = data.default;
+    };
+    const generate = async () => {
+        try {
+            await api("/api/keys/new", { curve: curve.value });
+            toast(`Generated a fresh ${curve.value} key`, "ok");
+            await refresh();
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const mint = async () => {
+        let parsed;
+        try {
+            parsed = JSON.parse(claims.value);
+        }
+        catch (e) {
+            toast(`Claims are not valid JSON: ${e.message}`, "bad");
+            return;
+        }
+        try {
+            const res = await api("/api/mint", {
+                claims: parsed,
+                key_id: mintKey.value,
+                typ: typ.value,
+            });
+            output.replaceChildren(card("Signed token", `${res.alg} · ${typ.value} · ${res.token.length} characters`, code(res.token), h("p", { class: "muted", text: `Native analyser verdict: ${res.analysis.risk?.score ?? "—"} / 100 (grade ${res.analysis.risk?.grade ?? "?"}).` })), card("Analysis of the new token", "Straight back through the C++ core", res.analysis.header ? code(pretty(res.analysis.header), "code--tight") : empty("no header"), res.analysis.payload ? code(pretty(res.analysis.payload), "code--tight") : empty("no payload")));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const view = h("div", { class: "view" }, h("div", { class: "grid-2" }, card("Session keyring", "Keys live in memory only — never written to disk", h("div", { class: "row row--end" }, field("Curve", curve), button("Generate key", () => void generate(), "ghost")), list), card("Mint a token", "Signed by authlas-python, then audited by the C++ core", h("div", { class: "row" }, field("Key", mintKey), field("typ", typ)), field("Claims", claims), h("div", { class: "toolbar" }, button("Sign token", () => void mint()), h("span", { class: "spacer" })))), output);
+    void refresh().catch((e) => toast(e.message, "bad"));
+    return view;
+}
+
+/* ---- views/sdjwt.js ---- */
+/** SD-JWT studio: issue, reveal, present, verify — with native digest matching. */
+
+
+
+const CLAIMS = {
+    iss: "https://issuer.example",
+    sub: "alice@example.com",
+    given_name: "Alice",
+    family_name: "Liddell",
+    age_over_18: true,
+    address: { locality: "Berlin", country: "DE" },
+};
+function sdjwtView() {
+    const claims = textarea({ rows: 10 });
+    claims.value = pretty(CLAIMS);
+    const hideBox = h("div", { class: "checks" });
+    const decoys = input({ type: "number", min: 0, max: 8, value: 1 });
+    const keySel = select([]);
+    const issued = h("div", { class: "stack" });
+    const presentation = h("div", { class: "stack" });
+    let current = null;
+    const syncChecks = () => {
+        let data = {};
+        try {
+            data = JSON.parse(claims.value);
+        }
+        catch {
+            hideBox.replaceChildren(h("span", { class: "muted", text: "claims are not valid JSON yet" }));
+            return;
+        }
+        hideBox.replaceChildren(...Object.keys(data).filter((k) => !k.startsWith("_")).map((k) => {
+            const box = h("input", { type: "checkbox", value: k });
+            if (k === "given_name" || k === "age_over_18")
+                box.checked = true;
+            return h("label", { class: "check" }, box, h("span", { text: k }));
+        }));
+    };
+    claims.addEventListener("input", syncChecks);
+    const digestTable = (sd) => {
+        const rows = sd.digests.map((d) => {
+            const parts = Array.isArray(d.json) ? d.json : [];
+            const matched = sd.match.pairs.some((p) => p.disclosure === d.index);
+            return h("tr", null, h("td", { class: "num", text: String(d.index) }), h("td", null, h("code", { text: String(parts[1] ?? "decoy") })), h("td", null, h("code", { text: JSON.stringify(parts[2] ?? null) })), h("td", null, h("code", { class: "trunc", text: d.digest })), h("td", null, badge(matched ? "in _sd" : "decoy", matched ? "ok" : "idle")));
+        });
+        return h("div", { class: "table-scroll" }, h("table", { class: "table" }, h("thead", null, h("tr", null, h("th", { text: "#" }), h("th", { text: "claim" }), h("th", { text: "value" }), h("th", { text: "sha-256 digest" }), h("th", { text: "referenced" }))), h("tbody", null, ...rows)));
+    };
+    const issue = async () => {
+        let parsed;
+        try {
+            parsed = JSON.parse(claims.value);
+        }
+        catch (e) {
+            toast(`Claims are not valid JSON: ${e.message}`, "bad");
+            return;
+        }
+        const hide = Array.from(hideBox.querySelectorAll("input[type=checkbox]"))
+            .filter((b) => b.checked)
+            .map((b) => b.value);
+        try {
+            const res = await api("/api/sdjwt/issue", {
+                claims: parsed, hide, decoys: Number(decoys.value) || 0, key_id: keySel.value,
+            });
+            current = res;
+            const sd = res.analysis.sd;
+            issued.replaceChildren(card("Issued SD-JWT", `${hide.length} hidden claim(s) · ${Number(decoys.value) || 0} decoy(ies) · ${res.sd_jwt.length} characters`, code(res.sd_jwt), sd ? digestTable(sd) : empty("no disclosure information")), card("Disclose", "A presentation reveals only the disclosures the verifier asked for", h("div", { class: "checks" }, ...res.disclosures.map((d, i) => {
+                const box = h("input", { type: "checkbox", value: String(i) });
+                box.checked = i === 0;
+                const parts = sd?.digests[i]?.json;
+                const label = Array.isArray(parts) ? String(parts[1] ?? "decoy") : `disclosure ${i}`;
+                return h("label", { class: "check" }, box, h("span", { text: `${i} · ${label}` }));
+            })), h("div", { class: "toolbar" }, button("Create presentation", () => void present()), button("Verify full credential", () => void verify(), "ghost"))));
+            presentation.replaceChildren();
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const revealList = () => Array.from(presentation.querySelectorAll(".checks input:checked")).map((b) => Number(b.value));
+    const present = async () => {
+        if (!current)
+            return;
+        const boxes = Array.from(issued.querySelectorAll(".card:last-child .check input"));
+        const reveal = boxes.filter((b) => b.checked).map((b) => Number(b.value));
+        try {
+            const res = await api("/api/sdjwt/present", {
+                sd_jwt: current.sd_jwt, reveal,
+            });
+            const visible = res.analysis.payload ?? {};
+            presentation.replaceChildren(card("Presentation", `${res.revealed} disclosure(s) attached · ${res.presentation.split("~").length - 1} segment(s)`, code(res.presentation), h("p", { class: "muted", text: `Still hidden: ${(res.analysis.sd?.visible_claims ?? []).length} visible claim(s), ${res.analysis.sd?.hidden_digests ?? 0} digests remain in _sd.` }), code(pretty(visible), "code--tight", "Copy visible claims")));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const verify = async () => {
+        if (!current)
+            return;
+        try {
+            const res = await api("/api/sdjwt/verify", { sd_jwt: current.sd_jwt, key_id: keySel.value });
+            presentation.replaceChildren(card("Verification", "authlas re-checks the issuer signature, the disclosures and every digest", res.ok
+                ? h("div", { class: "verdict verdict--ok" }, h("div", { class: "verdict__head" }, badge("verified", "ok"), h("span", { class: "muted", text: res.issuer ?? "" })), code(pretty(res.claims ?? {}), "code--tight", "Copy claims"))
+                : h("div", { class: "verdict verdict--bad" }, h("div", { class: "verdict__head" }, badge("rejected", "bad")), h("p", { class: "verdict__note", text: res.message ?? "unknown error" }))));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const load = async () => {
+        const keys = await api("/api/keys");
+        keySel.replaceChildren(...keys.keys.map((k) => h("option", { value: k.id, text: `${k.id} · ${k.curve}` })));
+        keySel.value = keys.default;
+        syncChecks();
+    };
+    const view = h("div", { class: "view" }, h("div", { class: "grid-2" }, card("Credential claims", "Tick a claim to hide it behind a salted digest", field("Claims", claims), field("Hide", hideBox), h("div", { class: "row row--end" }, field("Decoys", decoys, "Noise digests that hide the real claim count"), field("Issuer key", keySel), button("Issue credential", () => void issue()))), h("div", { class: "stack" }, card("How it works", "Three lines of protocol, one native digest check", h("ol", { class: "steps" }, h("li", null, h("b", { text: "Issue " }), "authlas signs the payload and replaces each hidden claim with a salted SHA-256 digest in ", h("code", { text: "_sd" }), "."), h("li", null, h("b", { text: "Present " }), "the holder attaches only the disclosures the verifier needs."), h("li", null, h("b", { text: "Check " }), "the C++ core recomputes every digest and maps it back to the ", h("code", { text: "_sd" }), " array before authlas accepts the signature."))))), issued, presentation);
+    void load().catch((e) => toast(e.message, "bad"));
+    return view;
+}
+
+/* ---- views/protocol.js ---- */
+/** Protocol console: PKCE, redirect policy, discovery order, challenges, DCQL. */
+
+
+
+function protocolView() {
+    /* ------------------------------------------------------- PKCE + redirect */
+    const verifier = input({ placeholder: "43-128 char verifier (leave empty to generate one)" });
+    const challenge = input({ placeholder: "S256 challenge (leave empty to pair with the verifier)" });
+    const webRedirect = input({ value: "http://app.example/cb" });
+    const nativeRedirect = input({ value: "com.example.app:/oauth2redirect" });
+    const registered = input({ value: "https://app.example/cb" });
+    const presented = input({ value: "https://app.example/cb?code=abc&state=xyz" });
+    const requested = input({ value: "openid profile admin" });
+    const allowed = input({ value: "openid profile" });
+    const pkceOut = h("div", { class: "stack" });
+    const runPkce = async () => {
+        try {
+            const res = await api("/api/pkce", {
+                verifier: verifier.value.trim(), challenge: challenge.value.trim(),
+                redirect: webRedirect.value.trim(), native: nativeRedirect.value.trim(),
+                registered: registered.value.trim(), presented: presented.value.trim(),
+                requested: requested.value.trim(), allowed: allowed.value.trim(),
+            });
+            verifier.value = res.generated.verifier;
+            challenge.value = res.generated.challenge;
+            pkceOut.replaceChildren(h("div", { class: "pairs" }, kv("verifier", res.generated.verifier.slice(0, 18) + "…", true), kv("challenge", res.generated.challenge.slice(0, 18) + "…", true)), h("ul", { class: "checks checks--result" }, h("li", null, badge(res.pkce?.ok ? "PKCE ok" : "PKCE rejected", res.pkce?.ok ? "ok" : "bad"), h("span", { text: res.pkce?.message ?? "verifier does not match challenge" })), ...res.redirects.map((r) => h("li", null, badge(`${r.kind} redirect`, r.ok ? "ok" : "bad"), h("span", { class: "mono trunc", text: r.uri }), h("span", { class: "muted", text: r.message }))), h("li", null, badge(res.redirect_match ? "exact match" : "no match", res.redirect_match ? "ok" : "bad"), h("span", { class: "muted", text: "registered vs presented redirect_uri" })), res.scope
+                ? h("li", null, badge(res.scope.ok ? "scope ok" : "scope excess", res.scope.ok ? "ok" : "warn"), h("span", { class: "muted", text: res.scope.excess?.length ? `excess: ${res.scope.excess.join(", ")}` : "requested scope is inside the allowed set" }))
+                : null));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    /* --------------------------------------------------------------- discovery */
+    const issuer = input({ value: "https://issuer.example" });
+    const resource = input({ value: "https://api.example/orders" });
+    const discOut = h("div", { class: "stack" });
+    const runDiscovery = async () => {
+        try {
+            const res = await api("/api/discovery", { issuer: issuer.value.trim(), resource: resource.value.trim() });
+            const urls = res.metadata_urls ?? [];
+            discOut.replaceChildren(urls.length
+                ? h("ol", { class: "urls" }, ...urls.map((u) => h("li", null, h("code", { text: u }))))
+                : empty("no metadata URLs"), h("div", { class: "pairs" }, kv("protected resource", res.protected_resource_url ?? "—", true), kv("canonical resource", res.canonical_resource ?? "—", true), kv("resource metadata", res.resource_metadata_url ?? "—", true)));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    /* --------------------------------------------------------------- challenge */
+    const header = textarea({ rows: 3 });
+    header.value = 'Bearer realm="api", error="insufficient_scope", scope="orders:write", resource_metadata="https://api.example/.well-known/oauth-protected-resource/orders"';
+    const chalOut = h("div", { class: "stack" });
+    const runChallenge = async () => {
+        try {
+            const res = await api("/api/challenge", { header: header.value.trim() });
+            const rows = [];
+            for (const c of res.challenges ?? []) {
+                for (const [k, v] of Object.entries(c.params)) {
+                    rows.push(h("tr", null, h("td", null, h("code", { text: c.scheme })), h("td", null, h("code", { text: k })), h("td", null, h("span", { class: "mono trunc", text: v }))));
+                }
+            }
+            chalOut.replaceChildren(h("div", { class: "table-scroll" }, h("table", { class: "table" }, h("thead", null, h("tr", null, h("th", { text: "scheme" }), h("th", { text: "parameter" }), h("th", { text: "value" }))), h("tbody", null, ...rows))), res.rebuilt ? code(res.rebuilt, "code--tight", "Copy rebuilt header") : empty(res.message ?? "nothing parsed"));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    /* -------------------------------------------------------------------- DCQL */
+    const query = textarea({ rows: 8 });
+    query.value = pretty({
+        credentials: [{
+                id: "pid", format: "dc+sd-jwt", meta: { vct_values: ["https://issuer.example/pid"] },
+                claims: [{ path: ["given_name"] }, { path: ["age_over_18"] }],
+            }],
+    });
+    const credential = textarea({ rows: 6 });
+    credential.value = pretty({ given_name: "Alice", age_over_18: true });
+    const dcqlOut = h("div", { class: "stack" });
+    const runDcql = async () => {
+        try {
+            const res = await api("/api/dcql", { query: query.value, credential: credential.value });
+            dcqlOut.replaceChildren(h("div", { class: "pairs" }, kv("valid query", res.ok ? "yes" : "no"), kv("satisfiable", res.satisfiable ? "yes" : "no"), kv("query ids", (res.query_ids ?? []).join(", ") || "—")), res.selection ? code(pretty(res.selection), "code--tight") : empty(res.message ?? "no selection"));
+        }
+        catch (e) {
+            toast(e.message, "bad");
+        }
+    };
+    const view = h("div", { class: "view" }, h("div", { class: "grid-2" }, card("PKCE & redirect policy", "Every check below is enforced by authlas at runtime", h("div", { class: "row" }, field("verifier", verifier), field("challenge", challenge)), h("div", { class: "row" }, field("web redirect", webRedirect), field("native redirect", nativeRedirect)), h("div", { class: "row" }, field("registered", registered), field("presented", presented)), h("div", { class: "row" }, field("scope requested", requested), field("scope allowed", allowed)), h("div", { class: "toolbar" }, button("Run checks", () => void runPkce())), pkceOut), card("Discovery planner", "The order in which an issuer is probed (RFC 8414 / OIDC / RFC 9728)", h("div", { class: "row" }, field("issuer", issuer), field("resource", resource)), h("div", { class: "toolbar" }, button("Build plan", () => void runDiscovery(), "ghost")), discOut)), h("div", { class: "grid-2" }, card("WWW-Authenticate", "Parse a challenge, see the parameters, rebuild it", field("Header value", header), h("div", { class: "toolbar" }, button("Parse", () => void runChallenge(), "ghost")), chalOut), card("DCQL probe", "Would this credential satisfy that query? (OpenID4VP 1.0 §6)", h("div", { class: "row" }, field("query", query), field("credential", credential)), h("div", { class: "toolbar" }, button("Evaluate", () => void runDcql(), "ghost")), dcqlOut)));
+    void runDiscovery();
+    return view;
+}
+
+/* ---- main.js ---- */
+/** Shell: navigation, layer chips, hash routing. */
+
+
+
+
+
+
+const ICONS = {
+    analyze: '<path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-9 9Z"/><path d="m20 20-4.35-4.35"/><path d="M8 12h8M12 8v8"/>',
+    keys: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m13 10 2.5 2.5"/>',
+    sdjwt: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h4M7 13h10M7 16h7"/><path d="m15 8 3 3-3 3"/>',
+    protocol: '<circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M6.5 6.5 10 10M17.5 6.5 14 10M6.5 17.5 10 14M17.5 17.5 14 14"/>',
+};
+const VIEWS = [
+    { id: "analyze", label: "Token analyser", hint: "structure, risk, verification", icon: ICONS.analyze,
+        subtitle: "Paste a JWS, JWE or SD-JWT and read it layer by layer.", build: analyzeView },
+    { id: "keys", label: "Keys & signing", hint: "keyring, thumbprints, minting", icon: ICONS.keys,
+        subtitle: "Generate keys, compare two RFC 7638 implementations, sign tokens.", build: keysView },
+    { id: "sdjwt", label: "SD-JWT studio", hint: "issue, disclose, present", icon: ICONS.sdjwt,
+        subtitle: "Selective disclosure end to end, with the digests computed natively.", build: sdjwtView },
+    { id: "protocol", label: "Protocol console", hint: "PKCE, discovery, DCQL", icon: ICONS.protocol,
+        subtitle: "The rules authlas enforces, made visible one check at a time.", build: protocolView },
+];
+function icon(paths) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "icon");
+    svg.innerHTML = paths;
+    return svg;
+}
+function boot() {
+    const app = document.getElementById("app");
+    if (!app)
+        throw new Error("#app is missing");
+    const nav = h("nav", { class: "nav" });
+    const outlet = h("main", { class: "outlet" });
+    const title = h("h1", { class: "topbar__title" });
+    const sub = h("p", { class: "topbar__sub" });
+    const chips = h("div", { class: "layer-chips" });
+    const activate = (view) => {
+        for (const item of nav.querySelectorAll(".nav__item")) {
+            item.classList.toggle("is-active", item.dataset.view === view.id);
+        }
+        title.textContent = view.label;
+        sub.textContent = view.subtitle;
+        outlet.replaceChildren(view.build());
+        location.hash = view.id;
+        outlet.scrollTop = 0;
+    };
+    for (const view of VIEWS) {
+        const item = h("button", { class: "nav__item", type: "button", dataset: { view: view.id } }, icon(view.icon), h("span", { class: "nav__text" }, h("span", { class: "nav__label", text: view.label }), h("span", { class: "nav__hint", text: view.hint })));
+        item.addEventListener("click", () => activate(view));
+        nav.append(item);
+    }
+    const rail = h("aside", { class: "rail" }, h("div", { class: "brand" }, h("div", { class: "brand__mark" }, icon('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18M3 12h18"/><circle cx="12" cy="12" r="3"/>')), h("div", { class: "brand__text" }, h("strong", { text: "AuthLens" }), h("span", { text: "OAuth · JOSE workbench" }))), nav, h("div", { class: "rail__foot" }, h("p", { class: "rail__cap", text: "three layers" }), h("ul", { class: "stacklist" }, h("li", null, h("b", { text: "C++" }), " native analyser"), h("li", null, h("b", { text: "Python" }), " authlas-python"), h("li", null, h("b", { text: "TypeScript" }), " this interface"))));
+    app.append(rail, h("div", { class: "main" }, h("header", { class: "topbar" }, h("div", null, title, sub), chips), outlet));
+    const bootView = VIEWS.find((v) => v.id === location.hash.slice(1)) ?? VIEWS[0];
+    activate(bootView);
+    api("/api/health")
+        .then((health) => {
+        const layers = [
+            { k: "core", ...health.layers.core },
+            { k: "main", ...health.layers.main },
+            { k: "ui", ...health.layers.ui },
+        ];
+        chips.replaceChildren(...layers.map((l) => h("span", { class: `lchip lchip--${l.k}` }, h("span", { class: "lchip__dot" }), h("span", { class: "lchip__lang", text: l.language }), h("code", { text: l.library ? l.library : `v${l.version}` }))), h("span", { class: "lchip lchip--uptime", text: `up ${health.uptime}s` }));
+    })
+        .catch(() => chips.replaceChildren(h("span", { class: "lchip lchip--bad", text: "API unreachable" })));
+}
+document.addEventListener("DOMContentLoaded", boot);
+</script>
+</body></html>
