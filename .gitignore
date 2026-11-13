@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+ui/dist/
+build_test_core
+authlens/libauthlens_core.so
